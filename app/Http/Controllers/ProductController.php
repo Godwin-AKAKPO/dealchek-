@@ -7,10 +7,9 @@ use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
 class ProductController extends Controller
 {
-     use AuthorizesRequests;
     public function index(Request $request)
     {
         $products = Product::with(['user', 'primaryImage'])
@@ -38,14 +37,22 @@ class ProductController extends Controller
 
     public function create()
     {
-        $this->authorize('create', Product::class);
+        // Vérifier si l'utilisateur est vendeur
+        if (!auth()->user()->is_seller) {
+            return redirect()->route('seller.register')
+                ->with('error', 'Vous devez être vendeur pour ajouter des produits.');
+        }
 
         return Inertia::render('Products/Create');
     }
 
     public function store(Request $request)
     {
-        $this->authorize('create', Product::class);
+        // Vérifier si l'utilisateur est vendeur
+        if (!$request->user()->is_seller) {
+            return redirect()->route('seller.register')
+                ->with('error', 'Vous devez être vendeur pour ajouter des produits.');
+        }
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -84,16 +91,16 @@ class ProductController extends Controller
         return redirect()->route('seller.products')->with('success', 'Produit créé avec succès !');
     }
 
-    // public function edit(Product $product)
-    // {
-    //     $this->authorize('update', $product);
+    public function edit(Product $product)
+    {
+        $this->authorize('update', $product);
 
-    //     $product->load('images');
+        $product->load('images');
 
-    //     return Inertia::render('Products/Edit', [
-    //         'product' => $product,
-    //     ]);
-    // }
+        return Inertia::render('Products/Edit', [
+            'product' => $product,
+        ]);
+    }
 
     public function update(Request $request, Product $product)
     {

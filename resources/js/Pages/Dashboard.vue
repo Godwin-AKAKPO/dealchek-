@@ -1,6 +1,15 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
+
+const showSellerAlert = ref(false);
+
+const handleAddProduct = (isSeller) => {
+    if (!isSeller) {
+        showSellerAlert.value = true;
+    }
+};
 </script>
 
 <template>
@@ -13,6 +22,52 @@ import { Head, Link } from '@inertiajs/vue3';
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <!-- Alert Modal pour non-vendeurs -->
+                <div v-if="showSellerAlert" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <!-- Background overlay -->
+                        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showSellerAlert = false"></div>
+
+                        <!-- Modal panel -->
+                        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div class="sm:flex sm:items-start">
+                                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                                        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                            Compte vendeur requis
+                                        </h3>
+                                        <div class="mt-2">
+                                            <p class="text-sm text-gray-500">
+                                                Vous devez avoir un compte vendeur pour ajouter des produits. Souhaitez-vous devenir vendeur maintenant ?
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <Link
+                                    href="/seller/register"
+                                    class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                                >
+                                    Devenir vendeur
+                                </Link>
+                                <button
+                                    type="button"
+                                    @click="showSellerAlert = false"
+                                    class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                >
+                                    Annuler
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <!-- Mes Produits -->
@@ -66,8 +121,10 @@ import { Head, Link } from '@inertiajs/vue3';
                     <h3 class="text-lg font-bold text-gray-900 mb-4">Actions rapides</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Link
-                            href="/products/create"
+                        <component
+                            :is="$page.props.auth.user.is_seller ? Link : 'button'"
+                            :href="$page.props.auth.user.is_seller ? '/products/create' : undefined"
+                            @click="!$page.props.auth.user.is_seller ? handleAddProduct(false) : null"
                             class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-blue-600 hover:bg-blue-50 transition-colors"
                         >
                             <div class="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -75,11 +132,11 @@ import { Head, Link } from '@inertiajs/vue3';
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                 </svg>
                             </div>
-                            <div class="ml-4">
+                            <div class="ml-4 text-left">
                                 <p class="font-semibold text-gray-900">Ajouter un produit</p>
                                 <p class="text-sm text-gray-600">Publiez un nouveau produit</p>
                             </div>
-                        </Link>
+                        </component>
 
                         <Link
                             href="/products"
