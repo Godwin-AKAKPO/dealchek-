@@ -63,7 +63,7 @@ const submit = () => {
                     <form @submit.prevent="submit" class="space-y-6">
                         <!-- Titre -->
                         <div>
-                            <InputLabel for="title" value="Titre du produit *" />
+                            <InputLabel for="title" value="Titre du produit *" class="text-gray-700 font-medium" />
                             <TextInput
                                 id="title"
                                 v-model="form.title"
@@ -77,7 +77,7 @@ const submit = () => {
 
                         <!-- Description -->
                         <div>
-                            <InputLabel for="description" value="Description *" />
+                            <InputLabel for="description" value="Description *" class="text-gray-700 font-medium" />
                             <textarea
                                 id="description"
                                 v-model="form.description"
@@ -92,7 +92,7 @@ const submit = () => {
                         <!-- Prix et Quantité -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <InputLabel for="price" value="Prix (FCFA) *" />
+                                <InputLabel for="price" value="Prix (FCFA) *" class="text-gray-700 font-medium" />
                                 <TextInput
                                     id="price"
                                     v-model="form.price"
@@ -107,7 +107,7 @@ const submit = () => {
                             </div>
 
                             <div>
-                                <InputLabel for="quantity" value="Quantité *" />
+                                <InputLabel for="quantity" value="Quantité *" class="text-gray-700 font-medium" />
                                 <TextInput
                                     id="quantity"
                                     v-model="form.quantity"
@@ -157,7 +157,7 @@ const submit = () => {
 
                         <!-- Frais de livraison -->
                         <div v-if="form.delivery_mode !== 'pickup'">
-                            <InputLabel for="delivery_fee" value="Frais de livraison (FCFA)" />
+                            <InputLabel for="delivery_fee" value="Frais de livraison (FCFA)" class="text-gray-700 font-medium" />
                             <TextInput
                                 id="delivery_fee"
                                 v-model="form.delivery_fee"
@@ -172,10 +172,10 @@ const submit = () => {
 
                         <!-- Images -->
                         <div>
-                            <InputLabel value="Photos du produit * (Max 5)" />
+                            <InputLabel value="Photos du produit * (Max 5)" class="text-gray-700 font-medium" />
                             
                             <div class="mt-2">
-                                <label class="flex justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-xl appearance-none cursor-pointer hover:border-primary-400 focus:outline-none">
+                                <label class="flex justify-center w-full h-32 px-4 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-blue-400 transition-colors">
                                     <span class="flex items-center space-x-2">
                                         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -202,13 +202,13 @@ const submit = () => {
                                     <button
                                         type="button"
                                         @click="removeImage(index)"
-                                        class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                                        class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                     </button>
-                                    <span v-if="index === 0" class="absolute top-2 left-2 bg-primary-600 text-white text-xs px-2 py-1 rounded">
+                                    <span v-if="index === 0" class="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
                                         Principal
                                     </span>
                                 </div>

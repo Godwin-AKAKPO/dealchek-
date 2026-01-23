@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -8,9 +8,53 @@ const props = defineProps({
 });
 
 const currentImageIndex = ref(0);
+const showCheckoutModal = ref(false);
+const showMessageModal = ref(false);
 
 const setCurrentImage = (index) => {
     currentImageIndex.value = index;
+};
+
+// Formulaire d'achat
+const checkoutForm = useForm({
+    product_id: props.product.id,
+    delivery_type: 'delivery',
+    delivery_address: '',
+});
+
+// Formulaire de message
+const messageForm = useForm({
+    product_id: props.product.id,
+    message: '',
+});
+
+const openCheckout = () => {
+    if (props.product.quantity === 0) {
+        alert('Ce produit est épuisé');
+        return;
+    }
+    showCheckoutModal.value = true;
+};
+
+const submitCheckout = () => {
+    checkoutForm.post('/checkout', {
+        onSuccess: () => {
+            showCheckoutModal.value = false;
+        }
+    });
+};
+
+const openMessage = () => {
+    showMessageModal.value = true;
+};
+
+const sendMessage = () => {
+    messageForm.post('/conversations', {
+        onSuccess: () => {
+            showMessageModal.value = false;
+            messageForm.reset('message');
+        }
+    });
 };
 </script>
 
@@ -152,6 +196,7 @@ const setCurrentImage = (index) => {
                                 <div class="space-y-3">
                                     <button
                                         v-if="product.quantity > 0 && $page.props.auth.user.id !== product.user_id"
+                                        @click="openCheckout"
                                         class="w-full btn-primary py-3"
                                     >
                                         Acheter maintenant
@@ -159,22 +204,178 @@ const setCurrentImage = (index) => {
 
                                     <button
                                         v-if="$page.props.auth.user.id !== product.user_id"
+                                        @click="openMessage"
                                         class="w-full btn-secondary py-3"
                                     >
-                                        <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg class="h-5 w-5 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                         </svg>
-                                        Contacter le vendeur
+                                        Discuter avec le vendeur
                                     </button>
 
                                     <Link
                                         v-if="$page.props.auth.user.id === product.user_id"
-                                        :href="route('products.edit', product.id)"
-                                        class="w-full btn-primary py-3 text-center"
+                                        :href="`/products/${product.id}/edit`"
+                                        class="w-full btn-primary py-3 text-center block"
                                     >
                                         Modifier le produit
                                     </Link>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Checkout -->
+                <div v-if="showCheckoutModal" class="fixed inset-0 z-50 overflow-y-auto">
+                    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showCheckoutModal = false"></div>
+
+                        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                                    Finaliser l'achat
+                                </h3>
+
+                                <div class="space-y-4">
+                                    <!-- Résumé produit -->
+                                    <div class="border-b pb-4">
+                                        <p class="font-semibold text-gray-900">{{ product.title }}</p>
+                                        <p class="text-2xl font-bold text-blue-600 mt-2">{{ product.formatted_price }}</p>
+                                    </div>
+
+                                    <!-- Type de livraison -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Mode de récupération
+                                        </label>
+                                        <div class="space-y-2">
+                                            <label v-if="product.delivery_mode === 'delivery' || product.delivery_mode === 'both'" class="flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    v-model="checkoutForm.delivery_type"
+                                                    value="delivery"
+                                                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                />
+                                                <span class="ml-2 text-sm text-gray-700">
+                                                    Livraison à domicile 
+                                                    <span v-if="product.delivery_fee > 0" class="text-gray-500">
+                                                        (+ {{ new Intl.NumberFormat('fr-FR').format(product.delivery_fee) }} FCFA)
+                                                    </span>
+                                                </span>
+                                            </label>
+                                            <label v-if="product.delivery_mode === 'pickup' || product.delivery_mode === 'both'" class="flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    v-model="checkoutForm.delivery_type"
+                                                    value="pickup"
+                                                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                />
+                                                <span class="ml-2 text-sm text-gray-700">Retrait sur place</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Adresse de livraison -->
+                                    <div v-if="checkoutForm.delivery_type === 'delivery'">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Adresse de livraison
+                                        </label>
+                                        <textarea
+                                            v-model="checkoutForm.delivery_address"
+                                            rows="3"
+                                            class="input-field"
+                                            placeholder="Entrez votre adresse complète..."
+                                            required
+                                        ></textarea>
+                                    </div>
+
+                                    <!-- Total -->
+                                    <div class="border-t pt-4">
+                                        <div class="flex justify-between text-lg font-bold">
+                                            <span>Total à payer</span>
+                                            <span class="text-blue-600">
+                                                {{ new Intl.NumberFormat('fr-FR').format(
+                                                    parseFloat(product.price) + (checkoutForm.delivery_type === 'delivery' ? parseFloat(product.delivery_fee || 0) : 0)
+                                                ) }} FCFA
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <button
+                                    @click="submitCheckout"
+                                    :disabled="checkoutForm.processing || (checkoutForm.delivery_type === 'delivery' && !checkoutForm.delivery_address)"
+                                    class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <span v-if="checkoutForm.processing">Traitement...</span>
+                                    <span v-else>Confirmer et payer</span>
+                                </button>
+                                <button
+                                    @click="showCheckoutModal = false"
+                                    class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                >
+                                    Annuler
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Message -->
+                <div v-if="showMessageModal" class="fixed inset-0 z-50 overflow-y-auto">
+                    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showMessageModal = false"></div>
+
+                        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                                    Message au vendeur
+                                </h3>
+
+                                <div class="space-y-4">
+                                    <!-- Info vendeur -->
+                                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                        <div class="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                                            {{ product.user.name[0].toUpperCase() }}
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="font-semibold text-gray-900">{{ product.user.name }}</p>
+                                            <p class="text-sm text-gray-600">{{ product.user.email }}</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Message -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Votre message
+                                        </label>
+                                        <textarea
+                                            v-model="messageForm.message"
+                                            rows="4"
+                                            class="input-field"
+                                            placeholder="Posez vos questions sur le produit..."
+                                            required
+                                        ></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <button
+                                    @click="sendMessage"
+                                    :disabled="messageForm.processing || !messageForm.message"
+                                    class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <span v-if="messageForm.processing">Envoi...</span>
+                                    <span v-else>Envoyer</span>
+                                </button>
+                                <button
+                                    @click="showMessageModal = false"
+                                    class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                >
+                                    Annuler
+                                </button>
                             </div>
                         </div>
                     </div>
